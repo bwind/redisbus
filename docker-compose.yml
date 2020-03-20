@@ -1,24 +1,11 @@
 version: "2"
 
-networks:
-  internal:
-    driver: bridge
-
 services:
   default:
     build: .
     volumes:
-      - ./redisbus/:/app/redisbus
-      - ./tests/:/app/tests
+      - ./:/app
     depends_on:
       - redis
-    networks:
-      internal:
-        aliases:
-          - default
   redis:
     image: redis:latest
-    networks:
-      internal:
-        aliases:
-          - redis
