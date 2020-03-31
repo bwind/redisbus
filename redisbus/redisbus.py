@@ -1,12 +1,11 @@
 import json
 import logging
-
-import redis
+import traceback
 
 
 class RedisBus:
-    def __init__(self, host=None):
-        self.redis = redis.StrictRedis(host=host)
+    def __init__(self, redis=None):
+        self.redis = redis
         self.pubsub = self.redis.pubsub()
         self.subscriptions = {}
 
@@ -24,5 +23,15 @@ class RedisBus:
             if message["type"] != "message":
                 continue
             callback = self.subscriptions.get(message["channel"].decode())
-            data = json.loads(message["data"].decode())
-            logging.info(f"Received message: {data} intended for {callback}")
+            if callback is None:
+                continue
+            try:
+                data = json.loads(message["data"].decode())
+            except json.decoder.JSONDecodeError:
+                continue
+            logging.debug(f"Received message {data} for callback {callback}")
+            try:
+                callback(data)
+            except Exception as exc:
+                logging.error(f"Callback {callback} raised exception: {exc}")
+                traceback.print_exc()
